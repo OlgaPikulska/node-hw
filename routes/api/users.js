@@ -8,3 +8,4 @@ usersRouter.post('/signup', signUp);
 usersRouter.post('/login', login);
 usersRouter.get('/logout', auth, logout);
 usersRouter.get('/current', auth, current);
+usersRouter.patch("/avatars", auth,)

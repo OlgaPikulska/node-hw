@@ -5,10 +5,14 @@ import { contactsRouter } from "./routes/api/contacts.js";
 import { usersRouter } from "./routes/api/users.js";
 export const app = express()
 import { auth } from "./middlewares.js";
+import { join } from "path";
+
+const imgPath = join("public", "avatars")
 
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 
 app.use(logger(formatsLogger))
+app.use(express.static(imgPath))
 app.use(cors())
 app.use(express.json())
 
