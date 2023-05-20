@@ -63,11 +63,10 @@ export const login = async (req, res, next) => {
     }
 
     const user = await getUserByMail(email);
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!user) return res.status(401).send("Email or password is wrong")
 
-    if (!user || !isValidPassword) {
-        return res.status(401).send("Email or password is wrong")
-    }
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) return res.status(401).send("Email or password is wrong")
 
     const payload = { id: user._id };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
