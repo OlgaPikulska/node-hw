@@ -5,9 +5,9 @@ import { getUserById, addNewUser, getUserByMail, updateToken, updateAvatar } fro
 import dotenv from "dotenv";
 import gravatar from "gravatar";
 import { join } from "path";
-import { STORE_AVATARS_DIRECTORY } from "../middlewares/multer.js";
 import fs from "fs/promises";
-import Jimp from "jimp"
+import Jimp from "jimp";
+import { STORE_AVATARS_DIRECTORY } from "../middlewares/multer.js"
 
 dotenv.config();
 
@@ -129,22 +129,20 @@ export const uploadAvatar = async (req, res, next) => {
 
                     .write(file.path);
             }).catch((error) => {
-                console.log("!!!Here is err")
                 console.error(error);
             });
 
         const avatarName = file.filename;
+
         const avatarPath = join(
-            process.cwd(),
-            "public",
-            "avatars",
+            STORE_AVATARS_DIRECTORY,
             avatarName
         );
         await fs.rename(file.path, avatarPath);
 
         const avatarURL = `/avatars/${avatarName}`;
-        user.avatarURL = avatarURL;
-        await user.save();
+
+        await updateAvatar(user._id, avatarURL)
 
         res.status(200).json({ avatarURL });
     } catch (e) {
