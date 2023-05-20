@@ -1,9 +1,13 @@
 import Joi from "joi";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { getUserById, addNewUser, getUserByMail, updateToken } from "../dataBase/dbQueries.js";
+import { getUserById, addNewUser, getUserByMail, updateToken, updateAvatar } from "../dataBase/dbQueries.js";
 import dotenv from "dotenv";
+import gravatar from "gravatar";
 import { join } from "path";
+import { STORE_AVATARS_DIRECTORY } from "../middlewares/multer.js";
+import fs from "fs/promises";
+import Jimp from "jimp"
 
 dotenv.config();
 
@@ -35,7 +39,11 @@ export const signUp = async (req, res, next) => {
 
     const hashedPassword = await bcrypt.hash(password, 6)
     try {
-        const newUser = await addNewUser({ email, password: hashedPassword });
+        const newUser = await addNewUser({
+            email,
+            password: hashedPassword,
+            avatarURL: gravatar.url(email)
+        });
         return res.status(201).json({ user: newUser })
     } catch (error) {
         return res.status(400)
@@ -103,14 +111,44 @@ export const current = async (req, res, next) => {
 }
 
 export const uploadAvatar = async (req, res, next) => {
-    const { description } = req.body;
-    const { path: temporaryName, originalname } = req.file;
-    const fileName = path.join(storeImage, originalname);
     try {
-        await fs.rename(temporaryName, fileName);
-    } catch (err) {
-        await fs.unlink(temporaryName);
-        return next(err);
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({ message: "Not authorized" });
+        }
+
+        const file = req.file;
+        if (!file) {
+            return res.status(400).json({ message: "No file provided" });
+        }
+
+        Jimp.read(file.path)
+            .then((picture) => {
+                return picture
+                    .resize(250, 250)
+
+                    .write(file.path);
+            }).catch((error) => {
+                console.log("!!!Here is err")
+                console.error(error);
+            });
+
+        const avatarName = file.filename;
+        const avatarPath = join(
+            process.cwd(),
+            "public",
+            "avatars",
+            avatarName
+        );
+        await fs.rename(file.path, avatarPath);
+
+        const avatarURL = `/avatars/${avatarName}`;
+        user.avatarURL = avatarURL;
+        await user.save();
+
+        res.status(200).json({ avatarURL });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Internal Server Error" });
     }
-    res.json({ description, message: 'Plik załadowany pomyślnie', status: 200 });
 };

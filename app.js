@@ -5,16 +5,13 @@ import { contactsRouter } from "./routes/api/contacts.js";
 import { usersRouter } from "./routes/api/users.js";
 export const app = express()
 import { auth } from "./middlewares/passport.js";
-import { join } from "path";
 import { STORE_AVATARS_DIRECTORY } from "./middlewares/multer.js";
 
-const imgPath = join("public", "avatars")
 
 const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
 
 app.use(logger(formatsLogger))
-//app.use(express.static(STORE_AVATARS_DIRECTORY))
-app.use(express.static(imgPath))
+app.use(express.static(STORE_AVATARS_DIRECTORY))
 app.use(cors())
 app.use(express.json())
 
